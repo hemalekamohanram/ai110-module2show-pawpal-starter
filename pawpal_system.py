@@ -278,6 +278,50 @@ class Scheduler:
                 )
         return warnings
 
+    def weighted_sort(self, tasks: Optional[List[Task]] = None) -> List[Task]:
+        """
+        Sort tasks by a score that combines priority AND urgency.
+
+        Score = priority × urgency_factor, where:
+          urgency_factor = 1 + 1 / (days_until_due + 1)   (when due_date is set)
+          urgency_factor = 1.0                              (no due_date → plain priority)
+
+        Examples at priority 3:
+          due today      → score 3 × (1 + 1/1) = 6.0
+          due in 6 days  → score 3 × (1 + 1/7) ≈ 3.43
+          no due_date    → score 3 × 1.0        = 3.0
+
+        A high-priority task due today will always beat the same task due next week.
+        A medium-priority task due today can outrank a high-priority task with no due_date.
+        """
+        if tasks is None:
+            tasks = self.get_all_tasks()
+        today = date.today()
+
+        def score(task: Task) -> float:
+            if task.due_date is not None:
+                days_away = max(0, (task.due_date - today).days)
+                urgency = 1 + 1 / (days_away + 1)
+            else:
+                urgency = 1.0
+            return task.priority * urgency
+
+        return sorted(tasks, key=score, reverse=True)
+
+    def weighted_generate(self) -> List[Task]:
+        """
+        Like generate(), but uses weighted_sort() instead of plain priority sort.
+        Tasks due sooner are scheduled first when priority is equal.
+        """
+        sorted_tasks = self.weighted_sort()
+        plan: List[Task] = []
+        time_used = 0
+        for task in sorted_tasks:
+            if time_used + task.duration <= self.available_time:
+                plan.append(task)
+                time_used += task.duration
+        return plan
+
     def mark_task_complete(self, task: Task, pet: Pet) -> Optional[Task]:
         """
         Mark a task done and auto-schedule its next occurrence.

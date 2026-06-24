@@ -330,3 +330,55 @@ def test_mark_task_complete_unknown_frequency_returns_none():
     result = s.mark_task_complete(task, pet)
     assert result is None
     assert len(pet.get_tasks()) == 1  # no new task added
+
+
+# ---------------------------------------------------------------------------
+# Scheduler — weighted_sort and weighted_generate
+# ---------------------------------------------------------------------------
+
+def test_weighted_sort_due_today_beats_same_priority_due_later():
+    today = date.today()
+    pet = Pet(name="Mochi", species="cat")
+    s = make_scheduler(pets=[pet])
+
+    due_later = make_task(name="Later", priority=3, due_date=today + timedelta(days=6))
+    due_today  = make_task(name="Today", priority=3, due_date=today)
+
+    result = s.weighted_sort([due_later, due_today])
+    assert result[0].get_routine_name() == "Today"
+
+
+def test_weighted_sort_no_due_date_falls_back_to_priority():
+    pet = Pet(name="Mochi", species="cat")
+    s = make_scheduler(pets=[pet])
+
+    low  = make_task(name="Low",  priority=1)
+    high = make_task(name="High", priority=3)
+
+    result = s.weighted_sort([low, high])
+    assert result[0].get_routine_name() == "High"
+
+
+def test_weighted_sort_urgent_medium_beats_non_urgent_high():
+    today = date.today()
+    pet = Pet(name="Mochi", species="cat")
+    s = make_scheduler(pets=[pet])
+
+    # priority 2 due today  → score = 2 × (1 + 1/1) = 4.0
+    # priority 3 no due_date → score = 3 × 1.0       = 3.0
+    urgent_medium = make_task(name="UrgentMed", priority=2, due_date=today)
+    calm_high     = make_task(name="CalmHigh",  priority=3)
+
+    result = s.weighted_sort([calm_high, urgent_medium])
+    assert result[0].get_routine_name() == "UrgentMed"
+
+
+def test_weighted_generate_respects_available_time():
+    today = date.today()
+    pet = Pet(name="Mochi", species="cat")
+    pet.add_task(make_task(name="A", priority=3, duration=50, due_date=today))
+    pet.add_task(make_task(name="B", priority=3, duration=50, due_date=today))
+    s = make_scheduler(pets=[pet], available_time=60)
+    plan = s.weighted_generate()
+    assert len(plan) == 1
+    assert s.get_total_duration(plan) <= 60
