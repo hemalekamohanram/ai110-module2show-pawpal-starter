@@ -196,3 +196,4 @@ Today's Schedule for Jordan's pets
 Bath (40 min, low priority) was dropped because adding it would exceed the 90-minute limit — the greedy scheduler fills highest-priority tasks first and skips anything that no longer fits.
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+![alt text](image.png)
