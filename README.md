@@ -32,6 +32,19 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### Data persistence
+
+PawPal+ saves all owner, pet, and task data to `data.json` automatically. When you restart the app or rerun the script, your data is loaded back from that file — no re-entering required.
+
+**How it works:**
+- `save_to_json(owner)` — called in `app.py` after every "Save owner & pet" or "Add task" action. Serializes the full object tree (Owner → Pets → Tasks) to JSON. The only non-trivial part is `Task.due_date`, which is a Python `date` object — it is stored as an ISO string (`"YYYY-MM-DD"`) and converted back on load.
+- `load_from_json()` — called once on app startup via `st.session_state`. Returns `None` if no file exists yet (first run), so the app starts fresh without crashing.
+- `data.json` is written to the project root. It is excluded from version control via `.gitignore` since it contains runtime data, not source code.
+
+**Files modified for persistence:**
+- `pawpal_system.py` — added `to_dict()` / `from_dict()` to `Task`, `Pet`, `Owner`; added `save_to_json()` and `load_from_json()` module-level functions
+- `app.py` — import updated, session state initialisation now calls `load_from_json()`, both action buttons call `save_to_json()` after mutating state
+
 ### Suggested workflow
 
 1. Read the scenario carefully and identify requirements and edge cases.

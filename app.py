@@ -1,5 +1,5 @@
 import streamlit as st
-from pawpal_system import Owner, Pet, Task, Scheduler
+from pawpal_system import Owner, Pet, Task, Scheduler, save_to_json, load_from_json
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 st.title("🐾 PawPal+")
@@ -8,10 +8,10 @@ PRIORITY_MAP   = {"low": 1, "medium": 2, "high": 3}
 PRIORITY_LABEL = {1: "low", 2: "medium", 3: "high"}
 
 # ---------------------------------------------------------------------------
-# Session state
+# Session state — load from disk on first run, stay in memory after that
 # ---------------------------------------------------------------------------
 if "owner" not in st.session_state:
-    st.session_state.owner = None
+    st.session_state.owner = load_from_json()  # returns None if no file yet
 
 # ---------------------------------------------------------------------------
 # Step 1 — Owner & Pet setup
@@ -31,6 +31,7 @@ if st.button("Save owner & pet"):
     pet = Pet(name=pet_name, species=species)
     owner.add_pet(pet)
     st.session_state.owner = owner
+    save_to_json(owner)
     st.success(f"Saved! Owner: {owner_name} | Pet: {pet_name} ({species})")
 
 st.divider()
@@ -73,6 +74,7 @@ if st.button("Add task"):
         start_time=start_time_input.strip() or None,
     )
     sel_pet.add_task(task)
+    save_to_json(owner)
     st.success(f"Added '{task_name}' to {sel_pet_name}")
 
 # Show current tasks per pet

@@ -1,6 +1,8 @@
+import json
+import os
 import pytest
 from datetime import date, timedelta
-from pawpal_system import Task, Pet, Owner, Scheduler
+from pawpal_system import Task, Pet, Owner, Scheduler, save_to_json, load_from_json
 
 
 # ---------------------------------------------------------------------------
@@ -382,3 +384,61 @@ def test_weighted_generate_respects_available_time():
     plan = s.weighted_generate()
     assert len(plan) == 1
     assert s.get_total_duration(plan) <= 60
+
+
+# ---------------------------------------------------------------------------
+# JSON persistence — save_to_json / load_from_json
+# ---------------------------------------------------------------------------
+
+def test_save_and_load_round_trip(tmp_path):
+    filepath = str(tmp_path / "data.json")
+    owner = Owner(name="Jordan")
+    pet = Pet(name="Mochi", species="cat")
+    pet.add_task(make_task(name="Feeding", frequency="daily", duration=10, priority=3, due_date=date.today()))
+    owner.add_pet(pet)
+
+    save_to_json(owner, filepath)
+    loaded = load_from_json(filepath)
+
+    assert loaded.get_name() == "Jordan"
+    assert loaded.get_pets()[0].get_name() == "Mochi"
+    task = loaded.get_all_tasks()[0]
+    assert task.get_routine_name() == "Feeding"
+    assert task.due_date == date.today()
+    assert task.is_completed() is False
+
+
+def test_load_missing_file_returns_none(tmp_path):
+    result = load_from_json(str(tmp_path / "nonexistent.json"))
+    assert result is None
+
+
+def test_save_preserves_completed_status(tmp_path):
+    filepath = str(tmp_path / "data.json")
+    owner = Owner(name="Jordan")
+    pet = Pet(name="Mochi", species="cat")
+    task = make_task(name="Walk", completed=True)
+    pet.add_task(task)
+    owner.add_pet(pet)
+
+    save_to_json(owner, filepath)
+    loaded = load_from_json(filepath)
+    assert loaded.get_all_tasks()[0].is_completed() is True
+
+
+def test_save_preserves_multiple_pets_and_tasks(tmp_path):
+    filepath = str(tmp_path / "data.json")
+    owner = Owner(name="Jordan")
+    mochi = Pet(name="Mochi", species="cat")
+    biscuit = Pet(name="Biscuit", species="dog")
+    mochi.add_task(make_task(name="Feeding"))
+    biscuit.add_task(make_task(name="Walk"))
+    biscuit.add_task(make_task(name="Meds"))
+    owner.add_pet(mochi)
+    owner.add_pet(biscuit)
+
+    save_to_json(owner, filepath)
+    loaded = load_from_json(filepath)
+
+    assert len(loaded.get_pets()) == 2
+    assert len(loaded.get_all_tasks()) == 3
