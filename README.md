@@ -60,18 +60,63 @@ Today's Schedule for Jordan's pets
 ## 🧪 Testing PawPal+
 
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+Tests cover:
+- **Task completion** — `mark_complete()` flips status, idempotent on repeat calls
+- **Recurring tasks** — daily tasks advance 1 day, weekly advance 7 days, original not mutated
+- **Scheduling** — high priority tasks scheduled first, tasks skipped when time runs out
+- **Sorting** — tasks returned in chronological order, no `start_time` goes last
+- **Filtering** — by pet name and by completion status
+- **Conflict detection** — duplicate `start_time` slots flagged, tasks with no time ignored
+- **Edge cases** — empty lists, zero available time, unknown pet name, unknown frequency
 
 ```
-# Paste your pytest output here
+============================= test session starts ==============================
+platform darwin -- Python 3.14.6, pytest-8.2.0, pluggy-1.5.0
+collected 34 items
+
+tests/test_pawpal.py::test_mark_complete_changes_status PASSED           [  2%]
+tests/test_pawpal.py::test_mark_complete_is_idempotent PASSED            [  5%]
+tests/test_pawpal.py::test_next_occurrence_daily_advances_one_day PASSED [  8%]
+tests/test_pawpal.py::test_next_occurrence_weekly_advances_seven_days PASSED [ 11%]
+tests/test_pawpal.py::test_next_occurrence_uses_today_when_no_due_date PASSED [ 14%]
+tests/test_pawpal.py::test_next_occurrence_unknown_frequency_returns_none PASSED [ 17%]
+tests/test_pawpal.py::test_next_occurrence_does_not_mutate_original PASSED [ 20%]
+tests/test_pawpal.py::test_add_task_increases_pet_task_count PASSED      [ 23%]
+tests/test_pawpal.py::test_remove_task_decreases_pet_task_count PASSED   [ 26%]
+tests/test_pawpal.py::test_remove_task_not_in_list_raises_error PASSED   [ 29%]
+tests/test_pawpal.py::test_generate_with_zero_available_time_returns_empty PASSED [ 32%]
+tests/test_pawpal.py::test_generate_when_all_tasks_too_long_returns_empty PASSED [ 35%]
+tests/test_pawpal.py::test_generate_schedules_high_priority_first PASSED [ 38%]
+tests/test_pawpal.py::test_generate_skips_tasks_that_do_not_fit PASSED   [ 41%]
+tests/test_pawpal.py::test_get_total_duration_with_no_tasks_returns_zero PASSED [ 44%]
+tests/test_pawpal.py::test_sort_by_time_orders_chronologically PASSED    [ 47%]
+tests/test_pawpal.py::test_sort_by_time_tasks_without_start_time_go_last PASSED [ 50%]
+tests/test_pawpal.py::test_sort_by_time_empty_list_returns_empty PASSED  [ 52%]
+tests/test_pawpal.py::test_sort_by_time_all_no_start_time_preserves_relative_order PASSED [ 55%]
+tests/test_pawpal.py::test_filter_by_status_returns_only_pending PASSED  [ 58%]
+tests/test_pawpal.py::test_filter_by_status_returns_only_completed PASSED [ 61%]
+tests/test_pawpal.py::test_filter_by_status_no_matches_returns_empty PASSED [ 64%]
+tests/test_pawpal.py::test_filter_by_pet_returns_correct_tasks PASSED    [ 67%]
+tests/test_pawpal.py::test_filter_by_pet_unknown_name_returns_empty PASSED [ 70%]
+tests/test_pawpal.py::test_filter_by_pet_is_case_sensitive PASSED        [ 73%]
+tests/test_pawpal.py::test_filter_by_pet_no_pets_returns_empty PASSED    [ 76%]
+tests/test_pawpal.py::test_detect_conflicts_flags_same_start_time PASSED [ 79%]
+tests/test_pawpal.py::test_detect_conflicts_no_conflicts_returns_empty PASSED [ 82%]
+tests/test_pawpal.py::test_detect_conflicts_ignores_tasks_with_no_start_time PASSED [ 85%]
+tests/test_pawpal.py::test_detect_conflicts_no_tasks_returns_empty PASSED [ 88%]
+tests/test_pawpal.py::test_mark_task_complete_marks_task_done PASSED     [ 91%]
+tests/test_pawpal.py::test_mark_task_complete_adds_next_occurrence_to_pet PASSED [ 94%]
+tests/test_pawpal.py::test_mark_task_complete_next_due_date_is_tomorrow PASSED [ 97%]
+tests/test_pawpal.py::test_mark_task_complete_unknown_frequency_returns_none PASSED [100%]
+
+============================== 34 passed in 0.04s ==============================
 ```
+
+**Confidence level: ★★★★☆ (4/5)**
+Core scheduling logic, recurring tasks, and edge cases are well covered. Missing: UI integration tests and tests for the full Streamlit session flow.
 
 ## 📐 Smarter Scheduling
 
