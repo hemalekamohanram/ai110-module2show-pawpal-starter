@@ -34,17 +34,17 @@ steps taken:
 
 ## Prompt Comparison (SF11)
 
-> Compare two different prompts (or two different models) on the same task.
+**Task given to both models:** implement rescheduling logic for weekly recurring tasks — when a weekly task is marked complete, generate the next occurrence due 7 days later and add it back to the pet's task list.
 
-| | Option A | Option B |
-|-|----------|----------|
-| **Model / tool used** | | |
-| **Prompt** | | |
-| **Response summary** | | |
-| **What was useful** | | |
-| **Problems noticed** | | |
-| **Decision** | | |
+| | Option A — Claude (Sonnet) | Option B — ChatGPT (GPT-4o) |
+|-|---------------------------|------------------------------|
+| **Model / tool used** | Claude Sonnet via Claude Code | ChatGPT GPT-4o via chat.openai.com |
+| **Prompt** | "Based on my Task dataclass with a due_date field, implement next_occurrence() that returns a fresh copy due 7 days later for weekly tasks and 1 day later for daily tasks. It should return None for unknown frequencies." | "I have a Task class with fields: routine_name, frequency, duration, priority, completed, due_date. Write a next_occurrence method that handles daily and weekly recurrence." |
+| **Response summary** | Used `FREQUENCY_DAYS` dict + `timedelta`, returned `None` for unknown frequencies, used `date.today()` as fallback when `due_date` is None, kept the original task immutable by constructing a new Task | Used `datetime.strptime` + `strftime` to parse and reformat the date as a string, hardcoded `if frequency == "daily"` / `elif frequency == "weekly"` branches, raised `ValueError` for unknown frequencies |
+| **What was useful** | The dict-based dispatch (`FREQUENCY_DAYS`) made adding new frequencies trivial — just add an entry to the dict. The `None` fallback for missing `due_date` was a practical touch. | The if/elif structure was easy to read and understand for a beginner. The ValueError made the failure case explicit rather than silently returning None. |
+| **Problems noticed** | Slightly more abstract — the dict pattern requires understanding that `FREQUENCY_DAYS.get(freq)` returns `None` for unknown keys | Used string parsing (`strptime`) on a field that is already a `date` object — unnecessary conversion that would break if `due_date` was stored as a `date` not a string. Also raising `ValueError` instead of returning `None` means callers must always wrap in try/except. |
+| **Decision** | Used Claude's approach | Not used |
 
-**Which approach did you use in your final implementation and why?**
+**Which approach was used and why:**
 
-<!-- Your conclusion -->
+Claude's version. The `FREQUENCY_DAYS` dict is cleaner than if/elif chains — adding "monthly" later is one line, not a new branch. The `None` return for unknown frequencies is also a better fit for a scheduler that should skip unknown tasks gracefully rather than crash. The main manual correction was confirming that `due_date` is stored as a Python `date` object (not a string), so no parsing was needed — just `timedelta` arithmetic directly.

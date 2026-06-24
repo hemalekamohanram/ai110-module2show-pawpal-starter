@@ -57,18 +57,58 @@ PawPal+ saves all owner, pet, and task data to `data.json` automatically. When y
 
 ## 🖥️ Sample Output
 
+**Formatting features** (`main.py`):
+- `tabulate` (`rounded_outline` style) — structured ASCII tables with borders
+- 🔴 🟡 🟢 emoji dots — instant visual priority status at a glance
+- 🐱 🐶 species icons — identifies which pet each task belongs to
+- Skipped tasks section — shows what didn't fit and why
+
 ```
-Today's Schedule for Jordan's pets
-==========================================
-  08:00  Feeding             10 min  [high]
-  08:10  Morning walk        30 min  [high]
-  08:40  Medication           5 min  [high]
-  08:45  Play session        25 min  [medium]
-  09:10  Grooming            20 min  [low]
-==========================================
-  Total scheduled: 90 / 90 min
-  Tasks scheduled: 5 of 6 available
+ PawPal+ -- Jordan's pets
+
+🐱  Mochi (cat)
+╭────┬──────────┬────────────┬────────────┬─────────┬────────╮
+│    │ Task     │ Duration   │ Priority   │ Start   │ Freq   │
+├────┼──────────┼────────────┼────────────┼─────────┼────────┤
+│ 🔴  │ Feeding  │ 10 min     │ high       │ 08:30   │ daily  │
+│ 🟢  │ Grooming │ 20 min     │ low        │ 10:00   │ weekly │
+╰────┴──────────┴────────────┴────────────┴─────────┴────────╯
+
+🐶  Biscuit (dog)
+╭────┬──────────────┬────────────┬────────────┬─────────┬────────╮
+│    │ Task         │ Duration   │ Priority   │ Start   │ Freq   │
+├────┼──────────────┼────────────┼────────────┼─────────┼────────┤
+│ 🔴  │ Morning walk │ 30 min     │ high       │ 07:00   │ daily  │
+│ 🔴  │ Medication   │ 5 min      │ high       │ 08:00   │ daily  │
+│ 🟡  │ Play session │ 25 min     │ medium     │ 09:00   │ daily  │
+│ 🟢  │ Bath         │ 40 min     │ low        │ --      │ weekly │
+╰────┴──────────────┴────────────┴────────────┴─────────┴────────╯
+
+======================================================
+  Today's Schedule  (90 min available)
+======================================================
+╭────┬────────┬──────────────┬────────────┬────────────╮
+│    │ Time   │ Task         │ Duration   │ Priority   │
+├────┼────────┼──────────────┼────────────┼────────────┤
+│ 🔴  │ 07:00  │ Morning walk │ 30 min     │ high       │
+│ 🔴  │ 08:00  │ Medication   │ 5 min      │ high       │
+│ 🔴  │ 08:30  │ Feeding      │ 10 min     │ high       │
+│ 🟡  │ 09:00  │ Play session │ 25 min     │ medium     │
+│ 🟢  │ 10:00  │ Grooming     │ 20 min     │ low        │
+╰────┴────────┴──────────────┴────────────┴────────────╯
+
+  Scheduled: 5 tasks -- 90 / 90 min used
+
+  Skipped (1):
+     🟢 Bath (40 min, low) -- didn't fit
+
+--- Sort order: HIGH priority tasks, sorted by start_time ---
+  1. Morning walk       [start_time=07:00]  priority=3
+  2. Medication         [start_time=08:00]  priority=3
+  3. Feeding            [start_time=08:30]  priority=3
 ```
+
+**Priority-based scheduling:** all HIGH tasks are scheduled before MEDIUM or LOW ones. When multiple tasks share the same priority level, `start_time` is used as the tiebreaker — `07:00` before `08:00` before `08:30`. This is implemented in `Scheduler.generate()` using a compound sort key: `(-priority, start_time or "99:99")`.
 
 ## 🧪 Testing PawPal+
 

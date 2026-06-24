@@ -5,10 +5,18 @@ import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, timedelta
+from enum import IntEnum
 from typing import List, Optional
 
 # Maps a frequency string to the number of days until the next occurrence.
 FREQUENCY_DAYS: dict[str, int] = {"daily": 1, "weekly": 7}
+
+
+class Priority(IntEnum):
+    """Named priority levels. IntEnum means Priority.HIGH == 3 stays True."""
+    LOW    = 1
+    MEDIUM = 2
+    HIGH   = 3
 
 
 @dataclass
@@ -211,11 +219,15 @@ class Scheduler:
         """
         Build a daily plan:
         1. Pull all tasks from the owner's pets.
-        2. Sort by priority descending (3 = high scheduled first).
+        2. Sort by priority descending; when priorities are equal, sort by
+           start_time ascending so earlier-timed tasks come first.
         3. Add tasks greedily until available_time is used up.
         """
         tasks = self.get_all_tasks()
-        sorted_tasks = sorted(tasks, key=lambda t: t.priority, reverse=True)
+        sorted_tasks = sorted(
+            tasks,
+            key=lambda t: (-t.priority, t.start_time if t.start_time else "99:99")
+        )
 
         plan: List[Task] = []
         time_used = 0
