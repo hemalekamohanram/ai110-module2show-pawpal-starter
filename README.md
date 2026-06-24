@@ -128,14 +128,71 @@ Core scheduling logic, recurring tasks, and edge cases are well covered. Missing
 | Conflict detection | `Scheduler.detect_conflicts(tasks)` | O(n) detection using a `defaultdict` keyed by `start_time`. Any slot with more than one task is flagged. Returns a list of human-readable warning strings — never raises. Pass a subset to check a specific plan, or omit to check all tasks. |
 | Recurring tasks | `Task.next_occurrence()` · `Scheduler.mark_task_complete(task, pet)` | `next_occurrence()` uses `timedelta` to produce a fresh, uncompleted copy of a task due 1 day (daily) or 7 days (weekly) after its current `due_date`. `mark_task_complete()` calls `mark_complete()`, generates the next occurrence, and adds it to the pet automatically. |
 
+## Features
+
+- **Priority-based scheduling** — tasks are sorted by priority (high → medium → low) and fit greedily into the available time window. Tasks that don't fit are skipped and shown separately.
+- **Chronological sorting** — after a plan is generated, tasks are sorted by `start_time` ("HH:MM") so the schedule displays in time order. Tasks without a time assigned go last.
+- **Conflict detection** — if two tasks share the same `start_time`, the app flags them with a visible warning showing which tasks clash and at what time.
+- **Daily recurrence** — marking a daily task complete auto-generates the next occurrence due tomorrow. Weekly tasks push 7 days forward. The original task is never mutated.
+- **Status filtering** — tasks can be filtered to show only pending or only completed, giving the owner a clear view of what still needs doing.
+- **Per-pet filtering** — tasks can be retrieved for a specific pet by name, useful when an owner has multiple pets.
+- **Multi-pet support** — one owner can have multiple pets, each with their own task list. The scheduler aggregates across all pets when building the daily plan.
+
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+Run the app:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+```bash
+streamlit run app.py
+```
+
+### UI walkthrough
+
+1. **Step 1 — Owner & Pet Info**: Enter the owner's name, pet name, and species, then click **Save owner & pet**. This creates the `Owner` and `Pet` objects and stores them in session state so data persists across button clicks.
+
+2. **Step 2 — Add Tasks**: Choose which pet to assign the task to. Fill in task name, duration (minutes), priority, and an optional start time (HH:MM format). Click **Add task**. Repeat for as many tasks as needed. A table below shows all current tasks per pet.
+
+3. **Step 3 — Generate Schedule**: Enter how many minutes are available today, then click **Generate schedule**. The app runs `Scheduler.generate()`, assigns start times to each task, sorts chronologically with `sort_by_time()`, and displays the plan as a table. If any tasks share a start time, a conflict warning appears. Tasks that didn't fit are shown in a collapsible "Skipped tasks" section.
+
+4. **Step 4 — View Tasks by Status**: At the bottom of the page, two columns show pending vs completed tasks using `filter_by_status()`. This updates live as tasks are added.
+
+### Example workflow
+
+```
+Owner: Jordan   Pets: Mochi (cat), Biscuit (dog)
+
+Add tasks to Mochi:
+  - Feeding      | 10 min | high
+  - Grooming     | 20 min | low
+
+Add tasks to Biscuit:
+  - Morning walk | 30 min | high
+  - Medication   |  5 min | high
+  - Play session | 25 min | medium
+  - Bath         | 40 min | low
+
+Set available time: 90 min → Generate schedule
+
+Result: Feeding, Morning walk, Medication, Play session, Grooming all fit.
+        Bath is skipped (would exceed 90 min).
+        No conflicts detected (all times are sequential).
+```
+
+### CLI output (python main.py)
+
+```
+Today's Schedule for Jordan's pets
+==========================================
+  08:00  Feeding             10 min  [high]
+  08:10  Morning walk        30 min  [high]
+  08:40  Medication           5 min  [high]
+  08:45  Play session        25 min  [medium]
+  09:10  Grooming            20 min  [low]
+==========================================
+  Total scheduled: 90 / 90 min
+  Tasks scheduled: 5 of 6 available
+```
+
+Bath (40 min, low priority) was dropped because adding it would exceed the 90-minute limit — the greedy scheduler fills highest-priority tasks first and skips anything that no longer fits.
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
