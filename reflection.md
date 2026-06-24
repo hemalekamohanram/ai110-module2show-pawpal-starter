@@ -47,6 +47,14 @@ tasks moved from Schedule/Scheduler into Pet. That's the key design change that 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
 
+the conflict detector only flags tasks that share the exact same start_time string.
+it doesn't check whether two tasks overlap in duration — so if one task starts at 07:00 for 30 min and another starts at 07:15 for 20 min, no warning fires even though they run at the same time.
+
+that's a reasonable tradeoff here because:
+- most conflicts a pet owner creates are accidental exact matches (accidentally typing the same time twice)
+- overlap detection would need to convert "HH:MM" to minutes, sort the list, and compare time windows — more code for an edge case that rarely happens in a small personal schedule
+- the scheduler is meant to give a heads-up, not enforce hard rules, so catching the obvious case is enough for now
+
 ---
 
 ## 3. AI Collaboration

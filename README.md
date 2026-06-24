@@ -75,14 +75,13 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Sort tasks by time | `Scheduler.sort_by_time(tasks)` | Sorts a task list chronologically using `start_time` ("HH:MM" strings). Zero-padding makes lexicographic order identical to chronological order, so no datetime parsing is needed. Tasks with no `start_time` are pushed to the end via a `"99:99"` sentinel. |
+| Filter by completion status | `Scheduler.filter_by_status(completed)` | Returns all tasks across every pet whose `completed` flag matches the given boolean. Pass `False` for pending tasks, `True` for finished ones. Single O(n) pass over `get_all_tasks()`. |
+| Filter by pet | `Scheduler.filter_by_pet(pet_name)` | Returns the task list for a named pet. Short-circuits on first name match so it never scans more pets than needed. Name matching is case-sensitive. |
+| Conflict detection | `Scheduler.detect_conflicts(tasks)` | O(n) detection using a `defaultdict` keyed by `start_time`. Any slot with more than one task is flagged. Returns a list of human-readable warning strings — never raises. Pass a subset to check a specific plan, or omit to check all tasks. |
+| Recurring tasks | `Task.next_occurrence()` · `Scheduler.mark_task_complete(task, pet)` | `next_occurrence()` uses `timedelta` to produce a fresh, uncompleted copy of a task due 1 day (daily) or 7 days (weekly) after its current `due_date`. `mark_task_complete()` calls `mark_complete()`, generates the next occurrence, and adds it to the pet automatically. |
 
 ## 📸 Demo Walkthrough
 
