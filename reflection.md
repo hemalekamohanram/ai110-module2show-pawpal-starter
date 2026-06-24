@@ -5,12 +5,33 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+core actions:
+add information of a pet
+create and edit task
+generate schedule
+display schedule
 - What classes did you include, and what responsibilities did you assign to each?
+main objects:
+owner -> 
+    variables: name, list of pets
+    action: get name, add pet, get all tasks across pets
+pet -> 
+    variables: name, species, list of tasks
+    action: get name, add task, remove task, get tasks
+task -> 
+    variables: routine name, frequency, duration, priority, completed
+    action: get duration, get frequency, get routine name, get priority, mark complete
+scheduler -> 
+    variables: owner, available time
+    action: get all tasks, generate daily plan, get total duration
+
 
 **b. Design changes**
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
+
+tasks moved from Schedule/Scheduler into Pet. That's the key design change that happened during implementation.     
 
 ---
 
